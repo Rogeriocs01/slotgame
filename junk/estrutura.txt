@@ -1,0 +1,27 @@
+JOGO DE SLOTS/
+├── junk/ (arquivos que estou classificando para depois escolher o que usar, sons e imagens, so para ficar no github e nao precisar transportar em google drive e etc)
+├── assets/
+│   ├── bg.png
+│   ├── simbolos/
+│   │    ├── A.png
+│   │    ├── B.png
+│   │    ├── C.png
+│   │    ├── D.png
+│   │    └── 7.png
+│   ├── mascote/
+│   │    ├── idle.png
+│   │    ├── win.png
+│   │    └── lose.png
+│   └── sounds/
+│        ├── spin.wav
+│        ├── win.wav
+│        ├── lose.wav
+│        └── click.wav
+│
+└── src/
+    ├── main.py   ← vamos trocar
+    └── game/
+         ├── engine.py
+         ├── slots.py
+         ├── rewards.py
+         └── pygame_interface.py   ✅ (novo)
