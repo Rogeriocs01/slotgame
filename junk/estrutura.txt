@@ -1,22 +1,30 @@
 JOGO DE SLOTS/
-├── junk/ (arquivos que estou classificando para depois escolher o que usar, sons e imagens, so para ficar no github e nao precisar transportar em google drive e etc)
+├── junk/ (arquivos que estou classificando para depois escolher o que  
+│         usar, sons e imagens, so para ficar no github e nao precisar
+│         transportar em google drive e etc)
 ├── assets/
 │   ├── bg.png
 │   ├── simbolos/
-│   │    ├── A.png
-│   │    ├── B.png
-│   │    ├── C.png
-│   │    ├── D.png
-│   │    └── 7.png
+│   │    ├── 7.png
+│   │    ├── cereja.png
+│   │    ├── limão.png
+│   │    ├── morango.png
+│   │    └── uva.png
 │   ├── mascote/
 │   │    ├── idle.png
 │   │    ├── win.png
 │   │    └── lose.png
 │   └── sounds/
-│        ├── spin.wav
-│        ├── win.wav
-│        ├── lose.wav
-│        └── click.wav
+│        ├── click.mp3
+│        ├── lose1.mp3
+│        ├── lose2.wav
+│        ├── spin1.wav
+│        ├── spin2.mp3
+│        ├── spin3.mp3
+│        ├── theme1.wav
+│        ├── win1.mp3
+│        ├── win2.wav
+│        └── wincoin1.mp3
 │
 └── src/
     ├── main.py   ← vamos trocar
