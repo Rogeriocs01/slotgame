@@ -2,7 +2,14 @@ import random
 
 class SlotMachine:
     def __init__(self):
-        self.simbolos = ["A", "B", "C", "D", "7"]
+        # Nomes dos símbolos devem bater com assets_config.py
+        self.simbolos = [
+            "cereja",
+            "limao",
+            "uva",
+            "morango",
+            "7"
+        ]
 
     def girar(self):
         resultado = [

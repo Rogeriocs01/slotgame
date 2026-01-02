@@ -1,66 +1,101 @@
+# src/game/pygame_interface.py
+
 import pygame
-import os
-from game.engine import Jogo
+import sys
 
-pygame.init()
-pygame.mixer.init()
+from assets_config import BACKGROUND, SYMBOLS, MASCOT
 
-LARGURA = 900
-ALTURA = 500
-tela = pygame.display.set_mode((LARGURA, ALTURA))
-pygame.display.set_caption("Tigrinho Recreativo")
+# =========================
+# CONFIGURAÇÕES BÁSICAS
+# =========================
 
-jogo = Jogo()
-clock = pygame.time.Clock()
-fonte = pygame.font.SysFont("arialblack", 30)
-fonte_menor = pygame.font.SysFont("arial", 20)
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 600
+FPS = 60
 
-CAMINHO = os.path.join("..", "..", "assets")
-SIMBOLOS = os.path.join(CAMINHO, "simbolos")
+SYMBOL_SIZE = 120
+SYMBOL_Y = 260
+SYMBOL_X_POSITIONS = [360, 500, 640]
 
-bg = pygame.image.load(os.path.join(CAMINHO, "bg.png"))
-bg = pygame.transform.scale(bg, (LARGURA, ALTURA))
+# =========================
+# CLASSE PRINCIPAL DA TELA
+# =========================
 
-imagens = {}
-for s in ["A","B","C","D","7"]:
-    img = pygame.image.load(os.path.join(SIMBOLOS, f"{s}.png"))
-    imagens[s] = pygame.transform.scale(img, (120, 120))
+class SlotGameUI:
+    def __init__(self):
+        pygame.init()
+        pygame.mixer.init()
 
-slots = ["A", "B", "C"]
+        self.screen = pygame.display.set_mode(
+            (SCREEN_WIDTH, SCREEN_HEIGHT)
+        )
+        pygame.display.set_caption("Slot Game Recreativo")
 
-btn_rect = pygame.Rect(350, 400, 200, 60)
+        self.clock = pygame.time.Clock()
 
-rodando = True
-while rodando:
-    tela.blit(bg, (0,0))
+        # Carregar imagens
+        self.background = pygame.image.load(BACKGROUND).convert()
+        self.background = pygame.transform.scale(
+            self.background, (SCREEN_WIDTH, SCREEN_HEIGHT)
+        )
 
-    titulo = fonte.render("TIGRINHO RECREATIVO", True, (0,255,0))
-    tela.blit(titulo, (230, 10))
+        self.mascote_idle = pygame.image.load(
+            MASCOT["idle"]
+        ).convert_alpha()
 
-    saldo_txt = fonte_menor.render(f"Saldo: {jogo.saldo}", True, (255,255,255))
-    tela.blit(saldo_txt, (20, 70))
+        self.symbol_images = {}
+        for name, path in SYMBOLS.items():
+            img = pygame.image.load(path).convert_alpha()
+            img = pygame.transform.scale(
+                img, (SYMBOL_SIZE, SYMBOL_SIZE)
+            )
+            self.symbol_images[name] = img
 
-    for i, simb in enumerate(slots):
-        tela.blit(imagens[simb], (240 + i*150, 180))
+        # Símbolos iniciais (fixos)
+        self.current_symbols = ["cereja", "limao", "uva"]
 
-    pygame.draw.rect(tela, (0,200,0), btn_rect, border_radius=10)
-    girar_txt = fonte.render("GIRAR", True, (255,255,255))
-    tela.blit(girar_txt, (btn_rect.x+40, btn_rect.y+10))
+    # =========================
+    # LOOP PRINCIPAL
+    # =========================
 
-    pygame.display.update()
+    def run(self):
+        running = True
 
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            rodando = False
+        while running:
+            self.clock.tick(FPS)
 
-        if evento.type == pygame.MOUSEBUTTONDOWN:
-            if btn_rect.collidepoint(evento.pos):
-                if jogo.saldo >= jogo.aposta:
-                    jogo.saldo -= jogo.aposta
-                    resultado, ganho = jogo.maquina.girar()
-                    slots = resultado
-                    jogo.saldo += ganho
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
 
-    clock.tick(60)
+            self.draw()
+            pygame.display.flip()
 
-pygame.quit()
+        pygame.quit()
+        sys.exit()
+
+    # =========================
+    # DESENHO DA TELA
+    # =========================
+
+    def draw(self):
+        # Fundo
+        self.screen.blit(self.background, (0, 0))
+
+        # Símbolos
+        for i, symbol in enumerate(self.current_symbols):
+            img = self.symbol_images[symbol]
+            x = SYMBOL_X_POSITIONS[i]
+            self.screen.blit(img, (x, SYMBOL_Y))
+
+        # Mascote (canto inferior esquerdo)
+        self.screen.blit(self.mascote_idle, (40, 350))
+
+
+# =========================
+# EXECUÇÃO DIRETA
+# =========================
+
+if __name__ == "__main__":
+    game = SlotGameUI()
+    game.run()
