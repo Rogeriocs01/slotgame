@@ -1,0 +1,36 @@
+JOGO_DE_SLOTS/
+│
+├── assets/
+│   ├── mascote
+│   │   ├── idle.png - tigrinho normal        
+│   │   ├── lose.png - tigrinho triste
+│   │   ├── win.png - tigrinho feliz        
+│   │
+│   ├── sounds
+│   │   ├── click.mp3        
+│   │   ├── lose1.mp3
+│   │   ├── lose2.wav        
+│   │   ├── spin1.mp3    
+│   │   ├── spin2.mp3        
+│   │   ├── spin3.mp3
+│   │   ├── theme1.wav        
+│   │   ├── win1.mp3   
+│   │   ├── win2.mp3        
+│   │   └── wincoin1.mp3  
+│   │
+│   ├── symbols/
+│   │   ├── cereja.png
+│   │   ├── limao.png
+│   │   ├── uva.png
+│   │   └── ...
+│   │
+│   └── bg.png
+│
+├── src/
+│   ├── main.py
+│   ├── scenes/
+│   │   ├── menu_scene.py
+│   │   └── game_scene.py
+│   │
+│   └── core/
+│       └── slot_logic.py
