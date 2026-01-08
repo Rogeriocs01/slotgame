@@ -1,34 +1,23 @@
-import random
-
 class SlotMachine:
     def __init__(self):
-        # Nomes dos símbolos devem bater com assets_config.py
-        self.simbolos = [
-            "cereja",
-            "limao",
-            "uva",
-            "morango",
-            "7"
-        ]
+        self.paytable = {
+            "cereja": 2,
+            "limao": 2,
+            "uva": 3,
+            "morango": 4,
+            "7": 10,
+        }
 
-    def girar(self):
-        resultado = [
-            random.choice(self.simbolos),
-            random.choice(self.simbolos),
-            random.choice(self.simbolos)
-        ]
-        ganho = self.calcular_ganho(resultado)
-        return resultado, ganho
-
-    def calcular_ganho(self, resultado):
-        a, b, c = resultado
+    def calculate_win(self, symbols):
+        a, b, c = symbols
 
         # Três iguais
         if a == b == c:
-            return 200
+            multiplier = self.paytable.get(a, 0)
+            return multiplier * 10
 
         # Dois iguais
         if a == b or b == c or a == c:
-            return 100
+            return 5
 
         return 0

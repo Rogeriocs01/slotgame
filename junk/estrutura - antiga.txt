@@ -1,10 +1,12 @@
 JOGO_DE_SLOTS/
 │
+├── junk/ (arquivos que guardo para usar ou nao, como imagens, sons etc nao │           tem função no sistma)
+│
 ├── assets/
 │   ├── mascote
 │   │   ├── idle.png - tigrinho normal        
 │   │   ├── lose.png - tigrinho triste
-│   │   ├── win.png - tigrinho feliz        
+│   │   └── win.png - tigrinho feliz        
 │   │
 │   ├── sounds
 │   │   ├── click.mp3        
@@ -28,9 +30,13 @@ JOGO_DE_SLOTS/
 │
 ├── src/
 │   ├── main.py
-│   ├── scenes/
-│   │   ├── menu_scene.py
-│   │   └── game_scene.py
-│   │
-│   └── core/
-│       └── slot_logic.py
+│   └── game/
+│      ├── assets_config.py
+│      ├── engine.py
+│      ├── pygame_interface.py
+│      ├── rewards.py
+│      └── slot.py   
+│   │   
+│ 
+├── README.MD
+└── README.TXT 
