@@ -1,23 +1,27 @@
+import random
+
 class SlotMachine:
     def __init__(self):
-        self.paytable = {
-            "cereja": 2,
-            "limao": 2,
-            "uva": 3,
-            "morango": 4,
-            "7": 10,
-        }
+        self.simbolos = ["cereja", "limao", "uva", "morango", "7"]
 
-    def calculate_win(self, symbols):
-        a, b, c = symbols
+    def girar(self):
+        resultado = [
+            random.choice(self.simbolos),
+            random.choice(self.simbolos),
+            random.choice(self.simbolos),
+        ]
+        ganho = self.calcular_ganho(resultado)
+        return resultado, ganho
+
+    def calcular_ganho(self, resultado):
+        a, b, c = resultado
 
         # Três iguais
         if a == b == c:
-            multiplier = self.paytable.get(a, 0)
-            return multiplier * 10
+            return 200
 
         # Dois iguais
         if a == b or b == c or a == c:
-            return 5
+            return 100
 
         return 0

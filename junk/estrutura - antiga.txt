@@ -12,20 +12,20 @@ JOGO_DE_SLOTS/
 │   │   ├── click.mp3        
 │   │   ├── lose1.mp3
 │   │   ├── lose2.wav        
-│   │   ├── spin1.mp3    
+│   │   ├── spin1.wav    
 │   │   ├── spin2.mp3        
 │   │   ├── spin3.mp3
 │   │   ├── theme1.wav        
 │   │   ├── win1.mp3   
-│   │   ├── win2.mp3        
+│   │   ├── win2.wav        
 │   │   └── wincoin1.mp3  
 │   │
 │   ├── symbols/
 │   │   ├── cereja.png
 │   │   ├── limao.png
 │   │   ├── uva.png
-│   │   └── ...
-│   │
+│   │   ├── morango.png
+│   │   └── 7.png│   │
 │   └── bg.png
 │
 ├── src/

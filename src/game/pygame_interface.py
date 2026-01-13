@@ -1,225 +1,237 @@
-import pygame
-import random
-import sys
+# pygame_interface.py
+# Implementa animação REAL de rolagem com desaceleração e parada por coluna
+
 import os
-from slots import SlotMachine
-
+import sys
+import random
+import pygame
 
 # =========================
-# CAMINHOS
+# Paths
 # =========================
-
-BASE_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..")
-)
-
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
-SYMBOLS_DIR = os.path.join(ASSETS_DIR, "simbolos")
+SYMBOLS_DIR = os.path.join(ASSETS_DIR, "symbols")
+SOUNDS_DIR = os.path.join(ASSETS_DIR, "sounds")
+BG_PATH = os.path.join(ASSETS_DIR, "bg.png")
 
 # =========================
-# CONFIGURAÇÕES VISUAIS
+# Config
 # =========================
-
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 600
+SCREEN_W, SCREEN_H = 900, 600
 FPS = 60
+COLS = 3
+ROWS_VISIBLE = 3
+SYMBOL_SIZE = 120
+REEL_GAP = 20
+TOP_MARGIN = 120
+LEFT_MARGIN = (SCREEN_W - (COLS * SYMBOL_SIZE + (COLS - 1) * REEL_GAP)) // 2
 
-BACKGROUND_COLOR = (20, 20, 20)
-PANEL_COLOR = (55, 55, 55)
-SLOT_BG_COLOR = (235, 235, 235)
-
-BUTTON_COLOR = (200, 50, 50)
-BUTTON_HOVER = (220, 70, 70)
-TEXT_COLOR = (255, 255, 255)
-
-PANEL_WIDTH = 460
-PANEL_HEIGHT = 260
-
-SLOT_SIZE = 96
-SLOT_GAP = 20
+SPIN_SPEED_START = 35
+SPIN_DECEL = 0.6
+MIN_SPEED = 2
+STOP_DELAY_FRAMES = 18  # atraso entre paradas das colunas
 
 # =========================
-# CLASSE PRINCIPAL
+# Helpers
 # =========================
 
+def load_symbols():
+    symbols = []
+    for f in os.listdir(SYMBOLS_DIR):
+        if f.lower().endswith((".png", ".jpg", ".jpeg")):
+            img = pygame.image.load(os.path.join(SYMBOLS_DIR, f)).convert_alpha()
+            img = pygame.transform.smoothscale(img, (SYMBOL_SIZE, SYMBOL_SIZE))
+            symbols.append((os.path.splitext(f)[0], img))
+    if not symbols:
+        raise RuntimeError("Nenhum símbolo encontrado em assets/symbols")
+    return symbols
+
+# =========================
+# Slot Machine (lógica simples)
+# =========================
+class SlotMachine:
+    def __init__(self, symbols):
+        self.symbol_names = [s[0] for s in symbols]
+
+    def calcular_ganho(self, grid):
+        # grid: lista de colunas, cada coluna com 3 nomes visíveis
+        # regra simples: linha do meio igual
+        middle = [col[1] for col in grid]
+        if middle.count(middle[0]) == len(middle):
+            return 100
+        return 0
+
+# =========================
+# Reel (coluna com rolagem real)
+# =========================
+class Reel:
+    def __init__(self, x, symbols):
+        self.x = x
+        self.symbols = symbols[:]  # lista (name, surface)
+        self.queue = []
+        self.reset_queue()
+        self.offset = 0
+        self.speed = 0
+        self.spinning = False
+        self.stopping = False
+        self.target_names = None
+
+    def reset_queue(self):
+        # fila grande para simular infinito
+        self.queue = [random.choice(self.symbols) for _ in range(12)]
+
+    def start(self):
+        self.speed = SPIN_SPEED_START
+        self.spinning = True
+        self.stopping = False
+        self.target_names = None
+
+    def request_stop(self, target_names):
+        # target_names: 3 nomes finais (top, mid, bot)
+        self.stopping = True
+        self.target_names = target_names
+
+    def update(self):
+        if not self.spinning:
+            return
+
+        self.offset += self.speed
+
+        # passou um símbolo inteiro
+        while self.offset >= SYMBOL_SIZE:
+            self.offset -= SYMBOL_SIZE
+            self.queue.pop(0)
+            self.queue.append(random.choice(self.symbols))
+
+        if self.stopping:
+            self.speed = max(self.speed - SPIN_DECEL, MIN_SPEED)
+
+            # condição de parada suave
+            if self.speed <= MIN_SPEED + 0.01:
+                # alinhar para o alvo
+                names = [self.queue[i][0] for i in range(1, 4)]
+                if names == self.target_names and self.offset < 2:
+                    self.speed = 0
+                    self.offset = 0
+                    self.spinning = False
+                    self.stopping = False
+
+    def draw(self, screen):
+        y0 = TOP_MARGIN - self.offset
+        for i in range(5):  # desenha extra para rolagem
+            name, img = self.queue[i]
+            screen.blit(img, (self.x, y0 + i * SYMBOL_SIZE))
+
+    def visible_names(self):
+        # retorna 3 visíveis (top, mid, bot)
+        return [self.queue[i][0] for i in range(1, 4)]
+
+# =========================
+# UI Principal
+# =========================
 class SlotGameUI:
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption("Slot Game Recreativo")
-
-        self.screen = pygame.display.set_mode(
-            (SCREEN_WIDTH, SCREEN_HEIGHT)
-        )
+        pygame.mixer.init()
+        self.screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
+        pygame.display.set_caption("Slot Game")
         self.clock = pygame.time.Clock()
 
-        self.font = pygame.font.SysFont("arial", 28, bold=True)
+        self.bg = pygame.image.load(BG_PATH).convert()
+        self.bg = pygame.transform.smoothscale(self.bg, (SCREEN_W, SCREEN_H))
 
-        # Painel central
-        self.panel = pygame.Rect(
-            (SCREEN_WIDTH - PANEL_WIDTH) // 2,
-            (SCREEN_HEIGHT - PANEL_HEIGHT) // 2 - 40,
-            PANEL_WIDTH,
-            PANEL_HEIGHT
-        )
+        self.symbols = load_symbols()
+        self.machine = SlotMachine(self.symbols)
 
-        # Botão SPIN
-        self.button = pygame.Rect(
-            SCREEN_WIDTH // 2 - 90,
-            self.panel.bottom + 25,
-            180,
-            55
-        )
+        self.reels = []
+        for i in range(COLS):
+            x = LEFT_MARGIN + i * (SYMBOL_SIZE + REEL_GAP)
+            self.reels.append(Reel(x, self.symbols))
 
-        # =========================
-        # CARREGAR SÍMBOLOS
-        # =========================
-
-        self.symbol_images = {
-            "cereja": self.load_symbol("cereja.png"),
-            "limao": self.load_symbol("limao.png"),
-            "uva": self.load_symbol("uva.png"),
-            "morango": self.load_symbol("morango.png"),
-            "7": self.load_symbol("7.png"),
-        }
-
-        self.symbol_keys = list(self.symbol_images.keys())
-
-        # Símbolos iniciais
-        self.current = [
-            random.choice(self.symbol_keys),
-            random.choice(self.symbol_keys),
-            random.choice(self.symbol_keys),
-        ]
-
+        self.font = pygame.font.SysFont(None, 36)
+        self.last_win = 0
         self.spinning = False
-        self.spin_timer = 0
+        self.stop_index = 0
+        self.stop_timer = 0
 
-    # =========================
-    # FUNÇÕES AUXILIARES
-    # =========================
+        sSOUNDS_DIR = os.path.join(ASSETS_DIR, "sounds")
 
-    def load_symbol(self, filename):
-        path = os.path.join(SYMBOLS_DIR, filename)
-        image = pygame.image.load(path).convert_alpha()
-        return pygame.transform.smoothscale(
-            image, (SLOT_SIZE, SLOT_SIZE)
-        )
+        self.sounds = {
+            "click": pygame.mixer.Sound(os.path.join(SOUNDS_DIR, "click.mp3")),
+            "spin": pygame.mixer.Sound(os.path.join(SOUNDS_DIR, "spin1.wav")),
+            "win": pygame.mixer.Sound(os.path.join(SOUNDS_DIR, "win1.mp3")),
+            "lose": pygame.mixer.Sound(os.path.join(SOUNDS_DIR, "lose1.mp3")),
+}
 
-    # =========================
-    # SPIN
-    # =========================
 
-    def spin(self):
+    def start_spin(self):
+        if self.spinning:
+            return
+        self.last_win = 0
         self.spinning = True
-        self.spin_timer = 20
+        self.stop_index = 0
+        self.stop_timer = 0
+        self.sounds["spin"].play()
+        for r in self.reels:
+            r.start()
 
-    # =========================
-    # UPDATE
-    # =========================
+        # define resultado final agora (justo)
+        self.final_grid = []
+        for _ in range(COLS):
+            col = [random.choice(self.symbols)[0] for _ in range(ROWS_VISIBLE)]
+            self.final_grid.append(col)
 
     def update(self):
         if self.spinning:
-            self.spin_timer -= 1
+            self.stop_timer += 1
+            if self.stop_index < COLS and self.stop_timer >= STOP_DELAY_FRAMES:
+                self.stop_timer = 0
+                target = self.final_grid[self.stop_index]
+                self.reels[self.stop_index].request_stop(target)
+                self.stop_index += 1
 
-            self.current = [
-                random.choice(self.symbol_keys),
-                random.choice(self.symbol_keys),
-                random.choice(self.symbol_keys),
-            ]
-
-            if self.spin_timer <= 0:
+            if all(not r.spinning for r in self.reels):
                 self.spinning = False
-                self.last_win = self.machine.calculate_win(self.current)
+                grid = [r.visible_names() for r in self.reels]
+                self.last_win = self.machine.calcular_ganho(grid)
+                if self.last_win > 0:
+                    self.sounds["win"].play()
+                else:
+                    self.sounds["lose"].play()
 
-    # =========================
-    # DRAW
-    # =========================
+        for r in self.reels:
+            r.update()
 
     def draw(self):
-        self.screen.fill(BACKGROUND_COLOR)
+        self.screen.blit(self.bg, (0, 0))
+        for r in self.reels:
+            r.draw(self.screen)
 
-        # Painel
-        pygame.draw.rect(
-            self.screen,
-            PANEL_COLOR,
-            self.panel,
-            border_radius=22
-        )
+        txt = self.font.render(f"Ganho: {self.last_win}", True, (255, 255, 255))
+        self.screen.blit(txt, (20, 20))
 
-        # Slots centralizados
-        total_width = (SLOT_SIZE * 3) + (SLOT_GAP * 2)
-        start_x = self.panel.centerx - total_width // 2
-        slot_y = self.panel.centery - SLOT_SIZE // 2
-
-        for i, key in enumerate(self.current):
-            x = start_x + i * (SLOT_SIZE + SLOT_GAP)
-
-            pygame.draw.rect(
-                self.screen,
-                SLOT_BG_COLOR,
-                (x - 6, slot_y - 6, SLOT_SIZE + 12, SLOT_SIZE + 12),
-                border_radius=14
-            )
-
-            self.screen.blit(
-                self.symbol_images[key],
-                (x, slot_y)
-            )
-
-        # Botão SPIN
-        mouse_pos = pygame.mouse.get_pos()
-        color = BUTTON_HOVER if self.button.collidepoint(mouse_pos) else BUTTON_COLOR
-
-        pygame.draw.rect(
-            self.screen,
-            color,
-            self.button,
-            border_radius=16
-        )
-
-        text = self.font.render("SPIN", True, TEXT_COLOR)
-        text_rect = text.get_rect(center=self.button.center)
-        self.screen.blit(text, text_rect)
+        btn = self.font.render("SPACE = SPIN", True, (255, 255, 0))
+        self.screen.blit(btn, (SCREEN_W - 220, 20))
 
         pygame.display.flip()
-        if not self.spinning:
-             if self.last_win > 0:
-                msg = f"VOCÊ GANHOU: {self.last_win}"
-                color = (50, 220, 50)
-        else:
-                msg = "TENTE NOVAMENTE"
-                color = (220, 60, 60)
-
-        text = self.font.render(msg, True, color)
-        rect = text.get_rect(center=(SCREEN_WIDTH // 2, self.panel.top - 20))
-        self.screen.blit(text, rect)
-
-
-    # =========================
-    # LOOP PRINCIPAL
-    # =========================
 
     def run(self):
-        while True:
+        running = True
+        while running:
             self.clock.tick(FPS)
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.button.collidepoint(event.pos) and not self.spinning:
-                        self.spin()
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT:
+                    running = False
+                if e.type == pygame.KEYDOWN and e.key == pygame.K_SPACE:
+                    self.start_spin()
 
             self.update()
             self.draw()
 
+        pygame.quit()
+        sys.exit()
 
-# =========================
-# EXECUÇÃO
-# =========================
 
 if __name__ == "__main__":
-    game = SlotGameUI()
-    game.run()
+    SlotGameUI().run()
