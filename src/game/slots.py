@@ -13,15 +13,25 @@ class SlotMachine:
         ganho = self.calcular_ganho(resultado)
         return resultado, ganho
 
-    def calcular_ganho(self, resultado):
-        a, b, c = resultado
+    def calcular_ganho(self, linha):
+        a, b, c = linha
 
-        # Três iguais
+         # JACKPOT
+        if a == b == c == "7":
+             return 1000
+
+         # TRÊS IGUAIS
         if a == b == c:
-            return 200
+            tabela = {
+            "morango": 300,
+            "uva": 200,
+            "limao": 150,
+            "cereja": 100,
+        }
+            return tabela.get(a, 0)
 
-        # Dois iguais
+    # DOIS IGUAIS
         if a == b or b == c or a == c:
-            return 100
+            return 50
 
         return 0

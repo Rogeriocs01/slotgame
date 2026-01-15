@@ -4,6 +4,10 @@ import sys
 import random
 import pygame
 
+from slots import SlotMachine
+
+
+
 # =========================
 # Paths
 # =========================
@@ -40,13 +44,7 @@ def load_symbols():
             symbols.append((os.path.splitext(f)[0], img))
     return symbols
 
-# =========================
-# Slot logic
-# =========================
-class SlotMachine:
-    def calcular_ganho(self, grid):
-        middle = [c[1] for c in grid]
-        return 100 if middle.count(middle[0]) == 3 else 0
+
 
 # =========================
 # Reel
@@ -120,18 +118,33 @@ class SlotGameUI:
         self.font = pygame.font.SysFont(None, 36)
         self.spinning = False
         self.final_grid = []
+        self.ultimo_ganho = 0
+        self.mensagem = ""
+        self.saldo = 1000
+        self.aposta = 50
+
 
     def start_spin(self):
         if self.spinning:
+           return
+
+        if self.saldo < self.aposta:
+            self.mensagem = "SALDO INSUFICIENTE"
             return
+
+        self.saldo -= self.aposta
         self.spinning = True
+        selfmensagem = ""
+
         self.final_grid = [
-            [random.choice(self.symbols)[0] for _ in range(ROWS_VISIBLE)]
-            for _ in range(COLS)
-        ]
+        [random.choice(self.symbols)[0] for _ in range(ROWS_VISIBLE)]
+        for _ in range(COLS)
+    ]
+
         self.sounds["spin"].play()
         for r in self.reels:
             r.start()
+
 
     def update(self):
         if self.spinning:
@@ -141,20 +154,49 @@ class SlotGameUI:
 
             if all(not r.spinning for r in self.reels):
                 self.spinning = False
-                grid = [r.visible() for r in self.reels]
-                if self.machine.calcular_ganho(grid):
+                reels_visiveis = [r.visible() for r in self.reels]
+
+                resultado = {
+    "reels": reels_visiveis,
+    "linha_central": [col[1] for col in reels_visiveis]
+}
+
+                ganho = self.machine.calcular_ganho(resultado["linha_central"])
+                self.ultimo_ganho = ganho
+                self.saldo += ganho
+
+                if ganho > 0:
+                    self.mensagem = f"GANHOU {ganho}!"
                     self.sounds["win"].play()
                 else:
+                    self.mensagem = "NÃO FOI DESSA VEZ"
                     self.sounds["lose"].play()
+
+
 
         for r in self.reels:
             r.update()
 
     def draw(self):
         self.screen.blit(self.bg, (0, 0))
+
         for r in self.reels:
             r.draw(self.screen)
+
+        if self.mensagem:
+            texto = self.font.render(self.mensagem, True, (255, 255, 0))
+            rect = texto.get_rect(center=(SCREEN_W // 2, 50))
+            self.screen.blit(texto, rect)
+        
+        saldo_txt = self.font.render(f"SALDO: {self.saldo}", True, (255, 255, 255))
+        aposta_txt = self.font.render(f"APOSTA: {self.aposta}", True, (255, 255, 255))
+
+        self.screen.blit(saldo_txt, (20, 20))
+        self.screen.blit(aposta_txt, (20, 60))
+
+
         pygame.display.flip()
+
 
     def run(self):
         while True:

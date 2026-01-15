@@ -31,6 +31,7 @@ JOGO_DE_SLOTS/
 ├── src/
 │   ├── main.py
 │   └── game/
+│      ├── scenes/ - VAZIO AINDA
 │      ├── assets_config.py
 │      ├── engine.py
 │      ├── pygame_interface.py
