@@ -122,6 +122,11 @@ class SlotGameUI:
         self.mensagem = ""
         self.saldo = 1000
         self.aposta = 50
+        self.mostrar_linha_vencedora = False
+        self.blink_timer = 0
+        self.blink_interval = 15  # frames (pisca rápido)
+        self.mostrar_linha_vencedora = False
+
 
 
     def start_spin(self):
@@ -167,10 +172,18 @@ class SlotGameUI:
 
                 if ganho > 0:
                     self.mensagem = f"GANHOU {ganho}!"
+                    self.mostrar_linha_vencedora = True
                     self.sounds["win"].play()
+                    self.blink_timer = FPS * 2  # pisca por 2 segundos
                 else:
                     self.mensagem = "NÃO FOI DESSA VEZ"
+                    self.mostrar_linha_vencedora = False
                     self.sounds["lose"].play()
+
+            if self.mostrar_linha_vencedora:
+                self.blink_timer -= 1
+            if self.blink_timer <= 0:
+                self.mostrar_linha_vencedora = False
 
 
 
@@ -179,6 +192,17 @@ class SlotGameUI:
 
     def draw(self):
         self.screen.blit(self.bg, (0, 0))
+
+        if self.mostrar_linha_vencedora and (pygame.time.get_ticks() // self.blink_interval) % 2 == 0:
+            overlay = pygame.Surface(
+                (COLS * SYMBOL_SIZE + (COLS - 1) * REEL_GAP, SYMBOL_SIZE),
+                pygame.SRCALPHA
+            )
+            overlay.fill((255, 0, 0, 140))  # dourado translúcido
+
+            y = TOP_MARGIN + SYMBOL_SIZE * 1  # linha central
+            self.screen.blit(overlay, (LEFT_MARGIN, y))
+
 
         for r in self.reels:
             r.draw(self.screen)
