@@ -4,7 +4,8 @@ import sys
 import random
 import pygame
 
-from slots import SlotMachine
+from rewards import SlotMachine
+
 
 
 
@@ -102,7 +103,7 @@ class SlotGameUI:
         )
 
         self.symbols = load_symbols()
-        self.machine = SlotMachine()
+        self.machine = SlotMachine(win_chance=0.25)
 
         self.reels = [
             Reel(LEFT_MARGIN + i * (SYMBOL_SIZE + REEL_GAP), self.symbols)
@@ -141,10 +142,21 @@ class SlotGameUI:
         self.spinning = True
         selfmensagem = ""
 
-        self.final_grid = [
-        [random.choice(self.symbols)[0] for _ in range(ROWS_VISIBLE)]
-        for _ in range(COLS)
-    ]
+        if self.machine.spin_is_winner():
+            self.final_grid = [
+                [random.choice(self.symbols)[0] for _ in range(ROWS_VISIBLE)]
+                for _ in range(COLS)
+            ]
+        else:
+            # força perda na linha central
+            self.final_grid = []
+            for _ in range(COLS):
+                col = []
+                col.append(random.choice(self.symbols)[0])   # topo
+                col.append(random.choice(["uva", "limao", "morango"]))  # centro
+                col.append(random.choice(self.symbols)[0])   # baixo
+                self.final_grid.append(col)
+
 
         self.sounds["spin"].play()
         for r in self.reels:
