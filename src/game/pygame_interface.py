@@ -25,9 +25,9 @@ SCREEN_W, SCREEN_H = 900, 600
 FPS = 60
 COLS = 3
 ROWS_VISIBLE = 3
-SYMBOL_SIZE = 120
-REEL_GAP = 20
-TOP_MARGIN = 120
+SYMBOL_SIZE = 99
+REEL_GAP = 50
+TOP_MARGIN = 115
 LEFT_MARGIN = (SCREEN_W - (COLS * SYMBOL_SIZE + (COLS - 1) * REEL_GAP)) // 2
 
 SPIN_SPEED = 40
@@ -80,9 +80,23 @@ class Reel:
             self.queue.append(random.choice(self.symbols))
 
     def draw(self, screen):
-        y = TOP_MARGIN - self.offset
-        for i in range(5):
-            screen.blit(self.queue[i][1], (self.x, y + i * SYMBOL_SIZE))
+        clip_rect = pygame.Rect(
+        self.x,
+        TOP_MARGIN,
+        SYMBOL_SIZE,
+        SYMBOL_SIZE * ROWS_VISIBLE
+    )
+
+        screen.set_clip(clip_rect)
+
+        y0 = TOP_MARGIN - self.offset
+        for i in range(4):
+            name, img = self.queue[i]
+            screen.blit(img, (self.x, y0 + i * SYMBOL_SIZE))
+
+            screen.set_clip(None)
+
+
 
     def visible(self):
         return [self.queue[i][0] for i in range(1, 4)]
