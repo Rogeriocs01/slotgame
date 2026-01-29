@@ -141,8 +141,6 @@ class SlotGameUI:
             self.reels.append(Reel(x, self.symbols))
 
         self.font = pygame.font.SysFont(None, 32)
-        self.last_win = 0
-
 
         self.ultimo_ganho = 0
         self.spinning = False
@@ -204,7 +202,7 @@ class SlotGameUI:
         # =========================
 # LINHA VENCEDORA (linha do meio)
 # =========================
-        if self.last_win > 0:
+        if self.ultimo_ganho > 0:
             overlay = pygame.Surface(
         (COLS * SYMBOL_SIZE + (COLS - 1) * REEL_GAP, SYMBOL_SIZE),
         pygame.SRCALPHA
